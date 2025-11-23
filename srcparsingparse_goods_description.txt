@@ -1,0 +1,134 @@
+# src/parsing/parse_goods_description.py
+import re
+import pandas as pd
+
+def extract_model_info(description):
+    """Extract model name and number from goods description"""
+    if pd.isna(description):
+        return None, None
+    
+    desc = str(description).upper()
+    
+    # Look for patterns like ABC-123, MODEL ABC-123, etc.
+    model_patterns = [
+        r'MODEL\s+([A-Z0-9\-_]+)',
+        r'([A-Z0-9]+-[A-Z0-9]+)',  # ABC-123 pattern
+        r'([A-Z0-9]+_[A-Z0-9]+)',  # ABC_123 pattern
+        r'([A-Z]{2,}[0-9]{2,})'     # ABC123 pattern
+    ]
+    
+    for pattern in model_patterns:
+        match = re.search(pattern, desc)
+        if match:
+            return match.group(1), match.group(1)
+    
+    return None, None
+
+def extract_capacity(description):
+    """Extract capacity/specifications from goods description"""
+    if pd.isna(description):
+        return None
+    
+    desc = str(description).upper()
+    
+    # Capacity patterns
+    capacity_patterns = [
+        r'(\d+(?:\.\d+)?)\s*(ML|L|G|KG|MG|CM|MM|INCH|IN|FT|MM)',
+        r'(\d+(?:\.\d+)?)\s*X\s*(\d+(?:\.\d+)?)\s*(ML|L|G|KG|MG|CM|MM|INCH|IN|FT)',
+        r'(\d+(?:\.\d+)?)\s*(?:X\s*\d+\s*)?(ML|L|G|KG|MG|CM|MM|INCH|IN|FT|MM)'
+    ]
+    
+    for pattern in capacity_patterns:
+        matches = re.findall(pattern, desc)
+        if matches:
+            # Return the first match
+            if len(matches[0]) == 2:
+                return f"{matches[0][0]}{matches[0][1]}"
+            elif len(matches[0]) == 3:
+                return f"{matches[0][0]}X{matches[0][1]}{matches[0][2]}"
+    
+    return None
+
+def extract_material(description):
+    """Extract material type from goods description"""
+    if pd.isna(description):
+        return None
+    
+    desc = str(description).upper()
+    
+    materials = [
+        'GLASS', 'STEEL', 'SS', 'STAINLESS', 'WOOD', 'WOODEN', 
+        'PLASTIC', 'METAL', 'COPPER', 'BRASS', 'ALUMINIUM', 'ALUMINUM',
+        'CERAMIC', 'PORCELAIN', 'TITANIUM', 'CARBON'
+    ]
+    
+    for material in materials:
+        if material in desc:
+            return material
+    
+    return None
+
+def extract_unit_price_usd(description):
+    """Extract unit price in USD from goods description"""
+    if pd.isna(description):
+        return None
+    
+    desc = str(description).upper()
+    
+    # USD price patterns
+    price_patterns = [
+        r'USD\s*([0-9.]+)',
+        r'@\s*USD\s*([0-9.]+)',
+        r'\$\s*([0-9.]+)',
+        r'([0-9.]+)\s*/\s*PC',
+        r'([0-9.]+)\s*/\s*PCS'
+    ]
+    
+    for pattern in price_patterns:
+        match = re.search(pattern, desc)
+        if match:
+            try:
+                return float(match.group(1))
+            except ValueError:
+                continue
+    
+    return None
+
+def extract_embedded_quantity(description):
+    """Extract embedded quantity from goods description"""
+    if pd.isna(description):
+        return None
+    
+    desc = str(description).upper()
+    
+    # Quantity patterns
+    qty_patterns = [
+        r'PACK\s+OF\s+(\d+)',
+        r'PACK\s*(\d+)',
+        r'(\d+)\s+IN\s+PACK',
+        r'(\d+)\s+PC\s+SET',
+        r'SET\s+OF\s+(\d+)'
+    ]
+    
+    for pattern in qty_patterns:
+        match = re.search(pattern, desc)
+        if match:
+            try:
+                return int(match.group(1))
+            except ValueError:
+                continue
+    
+    return None
+
+def parse_goods_description(df):
+    """Main function to parse goods description"""
+    df = df.copy()
+    
+    # Extract all components
+    df['model_name'], df['model_number'] = zip(*df['Goods Description'].apply(extract_model_info))
+    df['capacity_spec'] = df['Goods Description'].apply(extract_capacity)
+    df['material_type'] = df['Goods Description'].apply(extract_material)
+    df['unit_price_usd'] = df['Goods Description'].apply(extract_unit_price_usd)
+    df['embedded_quantity'] = df['Goods Description'].apply(extract_embedded_quantity)
+    
+    return df

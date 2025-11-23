@@ -1,0 +1,28 @@
+siddharth_trade_pipeline/
+├─ data/
+│  ├─ raw/
+│  │  └─ Sample Data 2.xlsx
+│  └─ processed/
+│     └─ trade_cleaned.csv
+├─ notebooks/
+│  ├─ 01_data_inspection.ipynb
+│  ├─ 02_parsing_and_cleaning.ipynb
+│  └─ 03_feature_engineering.ipynb
+├─ src/
+│  ├─ parsing/
+│  │  └─ parse_goods_description.py
+│  ├─ cleaning/
+│  │  └─ clean_base.py
+│  ├─ feature_engineering/
+│  │  └─ features.py
+│  └─ db/
+│     └─ load_to_db.py
+├─ sql/
+│  ├─ schema.sql
+│  ├─ macro_trends.sql
+│  ├─ pareto_hsn.sql
+│  └─ supplier_analysis.sql
+├─ dashboards/
+│  └─ trade_dashboard.pbix
+└─ docs/
+   └─ assignment_reference.md
